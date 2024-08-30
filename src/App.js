@@ -1,25 +1,44 @@
-import logo from './logo.svg';
-import './App.css';
+// src/App.js
+import React, { useState, useEffect } from 'react';
+import ArtGenerator from './Components/ArtGenerator';
+import ArtGallery from './Components/ArtGallery';
+import { auth, signInWithGoogle, logout } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import './App.css'; // Add styles here
 
-function App() {
+const App = () => {
+  const [artPieces, setArtPieces] = useState([]);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const addArt = (newArt) => {
+    setArtPieces([newArt, ...artPieces]);
+  };
+
+  const updateArt = (id, updates) => {
+    setArtPieces(artPieces.map(art => art.id === id ? { ...art, ...updates } : art));
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h1>AI-Generated Art Showroom</h1>
+      {user ? (
+        <>
+          <button onClick={logout}>Logout</button>
+          <ArtGenerator addArt={addArt} />
+          <ArtGallery artPieces={artPieces} updateArt={updateArt} />
+        </>
+      ) : (
+        <button onClick={signInWithGoogle}>Login with Google</button>
+      )}
     </div>
   );
-}
+};
 
 export default App;
